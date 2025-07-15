@@ -13,7 +13,11 @@ def connectMongoDB():
         print(
             f"Connected to database host: {client.address}",
         )
+        return client.get_database("fastapi-financial-tracker")
     except Exception as e:
         raise SystemError(
             f"Error connecting to mongodb, {e}",
         )
+
+
+mongodb = connectMongoDB()

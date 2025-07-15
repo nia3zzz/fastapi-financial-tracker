@@ -1,15 +1,15 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from utils.connectMongoDB import connectMongoDB
+from routes.user_routes import user_router
 
 # load the environmental variables
 load_dotenv()
 
-# connect to the mongodb database specified in the .env file
-connectMongoDB()
-
 # initialize the app and run it
 app = FastAPI()
+
+# import the router from the user routes
+app.include_router(user_router)
 
 
 # root page that return a message
