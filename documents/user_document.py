@@ -7,3 +7,9 @@ class UserModel(BaseModel):
     last_name: str = Field(min_length=3, max_length=13)
     email: EmailStr
     password: str = Field(mix_length=6, max_length=24)
+
+
+# build up class models for the type of user relate routes
+class LoginUser(BaseModel):
+    email: EmailStr
+    password: str = Field(mix_length=6, max_length=24)
