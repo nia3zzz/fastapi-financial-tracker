@@ -1,10 +1,11 @@
 from fastapi import APIRouter
-from documents.user_document import UserModel, LoginUser
+from documents.user_document import UserModel, LoginUser, UpdateUser
 from utils.connectMongoDB import mongodb
 from fastapi import HTTPException
 import bcrypt
 import os
 import jwt
+from bson import ObjectId
 
 user_router = APIRouter()
 
@@ -67,8 +68,6 @@ def login_user(request_body: LoginUser):
             },
         )
 
-    print(found_user)
-
     # compare the passwords to check if they are matching with the user document's hashed password
     if (
         bcrypt.checkpw(request_body.password.encode("utf-8"), found_user["password"])
@@ -84,7 +83,7 @@ def login_user(request_body: LoginUser):
 
     try:
         # create a jwt using the user id and return it to the user
-        encoded_jwt = jwt.encode({"user_id": "payload"}, key, algorithm="HS256")
+        encoded_jwt = jwt.encode({"id": str(found_user["_id"])}, key, algorithm="HS256")
 
         # return the jwt to the client
         return {
@@ -93,6 +92,34 @@ def login_user(request_body: LoginUser):
             "encoded_jwt": encoded_jwt,
         }
 
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "error", "message": "Something went wrong."},
+        )
+
+
+# route for updating the user credentials
+@user_router.put("/users/")
+def update_user(request_body: UpdateUser):
+    try:
+        # decode the hashed token and retrieve the user id
+        userId = jwt.decode(request_body.jwt_token, key, algorithms=["HS256"])["id"]
+
+        # hash the password provided by the user
+        hashedPassword = bcrypt.hashpw(
+            request_body.password.encode("utf-8"), bcrypt.gensalt(10)
+        )
+
+        # update the email and password of the user
+        mongodb.user.update_one(
+            {
+                "_id": ObjectId(userId),
+            },
+            {"$set": {"email": request_body.email, "password": hashedPassword}},
+        )
+
+        return {"status": "success", "message": "User has been updated successfully."}
     except Exception as e:
         raise HTTPException(
             status_code=500,
